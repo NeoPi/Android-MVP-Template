@@ -16,6 +16,7 @@ fun mvpActivityKt (
 package $packageName.v
 
 import android.os.Bundle
+import import ${applicationPackage}.R
 import androidx.appcompat.app.AppCompatActivity
 import ${applicationPackage}.p.${activityClass}Presenter
 import ${applicationPackage}.contract.${activityClass}Contract

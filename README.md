@@ -1,331 +1,501 @@
-# MVP Template
-
-> **TL;DR:** Click the <kbd>Use this template</kbd> button and clone it in IntelliJ IDEA.
+[TOC]
+# Android MVP Template
+### 序
+> 今天是在项目的时候频繁创建mvp架构的类，突然想到之前用到的AndroidLiveTemplate模板，于是就想写一个模板一键创建，
+于是乎就去安装目录下寻找相关的模板文件夹，找了半天发现原来的那套freemarker的那套模板引擎被和谐了，网上翻阅了资料才发现
+从Android4.1开始，Android live template的方式已经被Google和谐了，最近刚好是项目有这个需要，所以从新整理一下官方文档，也参考了一些网友的总结，再结合我项目MVP的架构，写了一个插件
 
 <!-- Plugin description -->
-**MVP Template** is a repository that provides a pure boilerplate template to make it easier to create a new plugin project (check the [Creating a repository from a template][gh:template] article).
-
-The main goal of this template is to speed up the setup phase of plugin development for both new and experienced developers by preconfiguring the project scaffold and CI, linking to the proper documentation pages, and keeping everything organized.
-
-[gh:template]: https://help.github.com/en/enterprise/2.20/user/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template
+ 这是一个AndroidStudio的插件，使用的是intellij官方开源的[intellij platform  plugin template](https://github.com/JetBrains/intellij-platform-plugin-template)
+ 我在这里就不对这个项目的结构以及详细的api进行讲解，如果有需要的小伙伴可以移步查询，本文档直接从项目源码进行改造成我们想要的template开始
 <!-- Plugin description end -->
 
-If you're still not quite sure what this is all about, read our introduction: [What is the IntelliJ Platform?][docs:intro]
-
-> **TIP**: Click the <kbd>Watch</kbd> button on the top to be notified about releases containing new features and fixes.
-
-
-### Table of contents
-
-In this README, we will highlight the following elements of template-project creation:
-
-- [Getting started](#getting-started)
-- [Gradle configuration](#gradle-configuration)
-- [Plugin template structure](#plugin-template-structure)
-    - [Dependency on the Kotlin standard library](#dependency-on-the-kotlin-standard-library)
-- [Plugin configuration file](#plugin-configuration-file)
-- [Sample code](#sample-code):
-    - listeners – project and dynamic plugin lifecycle
-    - services – project-related and application-related services
-    - actions – basic action with shortcut binding
-- [Predefined Run/Debug configurations](#predefined-rundebug-configurations)
-- [Continuous integration](#continuous-integration) based on GitHub Actions
-    - [Dependencies management](#dependencies-management) with dependabot
-    - [Changelog maintenance](#changelog-maintenance) with the Gradle Changelog Plugin
-    - [Release flow](#release-flow) using GitHub Releases
-    - [Publishing the plugin](#publishing-the-plugin) with the Gradle IntelliJ Plugin
-- [FAQ](#faq)
-- [Useful links](#useful-links)
-
-
-## Getting started
-
-Before we dive into plugin development and everything related to it, it's worth mentioning the benefits of using GitHub Templates. By creating a new project using the current template, you start with no history and no reference to this repository. This allows you to create a new repository easily without having to copy and paste previous content, clone repositories, or clear the history manually.
-
-All you have to do is click the <kbd>Use this template</kbd> button.
-
-![Use this template][file:use-this-template.png]
-
-After using the template to create your blank project, the [Template Cleanup][file:template_cleanup.yml] workflow will be triggered to override or remove any template-specific configurations, such as the plugin name, current changelog, etc. Once this is complete, the project is ready to be cloned to your local environment and opened with [IntelliJ IDEA][jb:download-ij].
-
-For the last step, you have to manually review the configuration variables described in the [gradle.properties][file:gradle.properties] file and *optionally* move sources from the *com.github.username.repository* package to the one that works best for you. Then you can get to work implementing your ideas.
-
-> **TIP:** To use Java in your plugin, create the `/src/main/java` directory.
-
-
-## Gradle configuration
-
-The recommended method for plugin development involves using the [Gradle][gradle] setup with the [gradle-intellij-plugin][gh:gradle-intellij-plugin] installed. The gradle-intellij-plugin makes it possible to run the IDE with your plugin and publish your plugin to the Marketplace Repository.
-
-A project built using the IntelliJ Platform Plugin Template includes a Gradle configuration that's already been set up. Feel free to read through the [Using Gradle][docs:using-gradle] articles to better understand your build and learn how to customize it.
-
-The most significant parts of the current configuration are:
-- Configuration written with [Gradle Kotlin DSL][gradle-kotlin-dsl].
-- Support for Kotlin and Java implementation.
-- Integration with the [gradle-changelog-plugin][gh:gradle-changelog-plugin], which automatically patches the change notes and description based on the `CHANGELOG.md` and `README.md` files.
-- Integration with the [gradle-intellij-plugin][gh:gradle-intellij-plugin] for smoother development.
-- Code linting with [detekt][detekt].
-- [Plugin publishing][docs:publishing] using the token.
-
-The project-specific configuration file [gradle.properties][file:gradle.properties] contains:
-
-| Property name             | Description                                                                                               |
-| ------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `pluginGroup`             | Package name - after *using* the template, this will be set to `com.github.username.repo`.                |
-| `pluginName`              | Plugin name displayed in the Marketplace and the Plugins Repository.                                      |
-| `pluginVersion`           | The current version of the plugin.                                                                        |
-| `pluginSinceBuild`        | The `since-build` attribute of the <idea-version> tag.                                                    |
-| `pluginUntilBuild`        | The `until-build` attribute of the <idea-version> tag.                                                    |
-| `platformType`            | The type of IDE distribution.                                                                             |
-| `platformVersion`         | The version of the IntelliJ Platform IDE that will be used to build the plugin.                           |
-| `platformDownloadSources` | IDE sources downloaded while initializing the Gradle build.                                               |
-| `platformPlugins`         | Comma-separated list of dependencies to the bundled IDE plugins and plugins from the Plugin Repositories. |
-
-The properties listed define the plugin itself or configure the [gradle-intellij-plugin][gh:gradle-intellij-plugin] – check its documentation for more details.
-
-For more details regarding Kotlin integration, please see: [Kotlin for Plugin Developers][kotlin-for-plugin-developers] section in the IntelliJ Platform Plugin SDK documentation.
-
-
-## Plugin template structure
-
-A generated IntelliJ Platform Plugin Template repository contains the following content structure:
+### 添加wizard-template.jar
+ 首先我们下载了intellij官方模板之后，我们首先在项目的根目录下创建一个lib目录，然后在AndroidStudio的安装目录下面找到wizard-template.jar,windows电脑该文件在**Android Studio\plugins\android\lib\\**
+ 目录下，MacOS系统的话在**Applications/Android Studio.app/Contents/plugins/android/lib/目录下**, 找到这个文件之后将其复制到新建的lib目录下面
+ 
+### 修改build.gradle.kts
+添加依赖
 
 ```
-.
-├── .run                    Predefined Run/Debug Configurations
-├── CHANGELOG.md            Full change history.
-├── LICENSE                 License, MIT by default
-├── README.md               README
-├── build/                  Output build directory
-├── build.gradle.kts        Gradle configuration
-├── detekt-config.yml       Detekt configuration
-├── gradle
-│   └── wrapper/            Gradle Wrapper
-├── gradle.properties       Gradle configuration properties
-├── gradlew                 *nix Gradle Wrapper binary
-├── gradlew.bat             Windows Gradle Wrapper binary
-└── src                     Plugin sources
-    └── main
-        ├── kotlin/         Kotlin source files
-        └── resources/      Resources - plugin.xml, icons, messages
+dependencies {
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.17.1")
+    compileOnly(files("lib/wizard-template.jar")) // 添加这一行
+}
 ```
 
-In addition to the configuration files, the most crucial part is the `src` directory, which contains our implementation and the manifest for our plugin – [plugin.xml][file:plugin.xml].
+### 修改gradle.properties
+这里我们需要修改的地方分别是如下四处
 
-> **TIP:** To use Java in your plugin, create the `/src/main/java` directory.
+| 字段 | 是否必须要修改 | 原始值 | 修改后的值 |
+| --- | --- | --- | --- |
+| pluginGroup | x | org.jetbrains.plugins.template | com.neo.mvp.template |
+| pluginName | x | IntelliJ Platform Plugin Template | MVP Template |
+| platformVersion | x | 0.10.1 | 0.0.1 |
+| platformPlugins | √ |  | Kotlin,com.intellij.java,org.jetbrains.android, android, org.jetbrains.kotlin |
+
+这其中有三个不是必须要修改的，不该也不影响后续的开发，不多还是建议结合自己项目修改一下这些配置
+
+### 修改setting.gradle.kts
+```
+rootProject.name = "MVP Template"
+```
+
+接下来对项目代码的编写，如果你修改了gradle.properties里的所pluginGroup属性的值，接下来你需要对
+**src/main/kotlin/** 目录下的包路径修改成对应的包名
+
+### 改造 ***listeners/MyProjectManagerListener.kt***
+管理着项目的生命周期的监听
+```kotlin
+
+internal class MyProjectManagerListener : ProjectManagerListener {
+    private var projectInstance: Project? = null
+    override fun projectOpened(project: Project) {
+        projectInstance = project
+        project.getService(MyProjectService::class.java)
+    }
+    override fun projectClosing(project: Project) {
+        projectInstance = null
+        super.projectClosing(project)
+    }
+}
+
+```
+
+### 接下来在src/main/kotlin目录下创建other，其他包和文件的目录结构如下
+```
+├──src
+├   └──main
+├       └──kotlin
+├            └──other
+├                 └──mvp
+├                     └──SimplePluginTemplateProviderImpl.kt
+├                     └──activity
+├                           └──res.layout
+├                                     └──mvpActivityXml.kt
+├                           └──src.app_package
+├                                     └──contract
+├                                        └──mvpContract.kt
+├                                     └──p
+├                                        └──mvpPresenter.kt
+├                                     └──v
+├                                        └──mvpActivity.kt
+├                                     └──mvpBasePresenter.kt
+├                                     └──mvpBaseView.kt
+├                           └──mvpActivityRecipe.kt
+├                           └──mvpActivityTemplate.kt
 
 
-## Plugin configuration file
+```
+### 以Activity为例，为创建的文件注入灵魂
+#### 实现 WizardTemplateProvider
+> MVPTemplateProviderImpl.kt
 
-The plugin configuration file is a [plugin.xml][file:plugin.xml] file located in the `src/main/resources/META-INF` directory. It provides general information about the plugin, its dependencies, extensions, and listeners.
+```
+package other.mvp
 
+import com.android.tools.idea.wizard.template.Template
+import com.android.tools.idea.wizard.template.WizardTemplateProvider
+import other.mvp.activity.mvpActivityTemplate
+
+
+/**
+ *  @Author Neo
+ *  @Date   2021/6/7
+ *  @Env    Viicare-Neo
+ *  @Description  SamplePluginTemplateProviderImpl
+ */
+class MVPTemplateProviderImpl: WizardTemplateProvider() {
+
+
+    override fun getTemplates(): List<Template> {
+        return listOf(
+            // activity 模板
+            mvpActivityTemplate
+        )
+    }
+}
+```
+
+#### 为mvpActivityTemplate.kt 注入灵魂
+> 这个文件是设置在创建Activity的时候，输入的信息，
+  例如 ActivityName，layoutName, packageName
+
+```kotlin
+package other.mvp.activity
+
+import com.android.tools.idea.wizard.template.*
+import com.android.tools.idea.wizard.template.impl.activities.common.MIN_API
+
+
+/**
+ *  @Author Neo
+ *  @Date   2021/6/7
+ *  @Env    Viicare-Neo
+ *  @Description  mvpActivityTemplate
+ *  这个文件是设置在创建Activity的时候，输入的信息，
+ *  例如 ActivityName，layoutName, packageName
+ */
+val mvpActivityTemplate
+    get() = template {
+        revision = 1
+        name = "MVP Activity"
+        description = "适用于MVP框架的Activity"
+        minApi = MIN_API
+        minBuildApi = MIN_API
+
+        category = Category.Other
+        formFactor = FormFactor.Mobile
+        screens = listOf(WizardUiContext.ActivityGallery, WizardUiContext.MenuEntry, WizardUiContext.NewProject, WizardUiContext.NewModule)
+
+        lateinit var layoutName: StringParameter
+
+        val activityClass = stringParameter {
+            name = "Activity Name"
+            default = "Main"
+            help = "只输入名字，不要包含Activity"
+            constraints = listOf(Constraint.NONEMPTY)
+        }
+
+        layoutName = stringParameter {
+            name = "Layout Name"
+            default = "activity_main"
+            help = "请输入布局的名字"
+            constraints = listOf(Constraint.LAYOUT, Constraint.UNIQUE, Constraint.NONEMPTY)
+            suggest = { activityToLayout(activityClass.value.toLowerCase()) }
+        }
+
+        val packageName = defaultPackageNameParameter
+
+        widgets(
+            TextFieldWidget(activityClass),
+            TextFieldWidget(layoutName),
+            PackageNameWidget(packageName)
+        )
+//        thumb { File("logo.png") }
+        recipe = { data: TemplateData ->
+            mvpActivityRecipe(
+                data as ModuleTemplateData,
+                activityClass.value,
+                layoutName.value,
+                packageName.value)
+        }
+    }
+
+val defaultPackageNameParameter
+    get() = stringParameter {
+        name = "Package name"
+        visible = { !isNewModule }
+        default = "com.neo.myapp"
+        constraints = listOf(Constraint.PACKAGE)
+        suggest = { packageName }
+    }
+```
+
+#### 为mvpActivityRecipe.kt 注入灵魂
+> 这个类是处理按照模板创建项目文件并保存的,我们再创建other.mvp.*下面的文件路径是可以任意的，
+> 实际创建的文件包路径都是在这个文件的save方法中决定
+```kotlin
+package other.mvp.activity
+
+import com.android.tools.idea.wizard.template.ModuleTemplateData
+import com.android.tools.idea.wizard.template.RecipeExecutor
+import other.mvp.activity.res.layout.mvpActivityXml
+import other.mvp.activity.src.app_package.contract.mvpContract
+import other.mvp.activity.src.app_package.mvpBasePresenter
+import other.mvp.activity.src.app_package.mvpBaseView
+import other.mvp.activity.src.app_package.p.mvpPresenter
+import other.mvp.activity.src.app_package.v.mvpActivityKt
+
+
+/**
+ *  @Author Neo
+ *  @Date   2021/6/7
+ *  @Env    Viicare-Neo
+ *  @Description  mvpActivityRecipe 这个文件用于将创建的文件保存到文件夹中，例如Activity，布局文件等
+ */
+fun RecipeExecutor.mvpActivityRecipe(
+    moduleData: ModuleTemplateData,
+    activityClass: String,
+    layoutName: String,
+    packageName: String
+) {
+
+    val (projectData, srcOut, resOut) = moduleData
+    val ktOrJavaExt = projectData.language.extension
+
+    val mvpActivity = mvpActivityKt(packageName, activityClass, layoutName, packageName)
+    // 保存Activity
+    save(mvpActivity, srcOut.resolve("v/${activityClass}Activity.${ktOrJavaExt}"))
+    // 保存xml
+    save(mvpActivityXml(packageName, activityClass), resOut.resolve("layout/${layoutName}.xml"))
+
+    try {
+        // 判断BaseView类是否存在，如果不存在则创建保存
+        val forName = Class.forName("${packageName}.BaseView")
+    } catch (e: Exception) {
+        save(mvpBaseView(packageName), srcOut.resolve("BaseView.${ktOrJavaExt}"))
+    }
+
+    try {
+        // 判断BasePresenter类是否存在，如果不存在则创建保存
+        val forName = Class.forName("${packageName}.BasePresenter")
+    } catch (e: Exception) {
+        save(mvpBasePresenter(packageName), srcOut.resolve("BasePresenter.${ktOrJavaExt}"))
+    }
+
+    // 保存Contract
+    save(mvpContract(packageName,activityClass), srcOut.resolve("contract/${activityClass}Contract.${ktOrJavaExt}"))
+    // 保存Presenter
+    save(mvpPresenter(packageName,packageName,activityClass), srcOut.resolve("p/${activityClass}Presenter.${ktOrJavaExt}"))
+}
+```
+#### 为mvpBaseView.kt注入灵魂
+> 这个是我项目中mvp架构的view底层类
+```kotlin
+package other.mvp.activity.src.app_package
+
+
+/**
+ *  @Author Neo
+ *  @Date   2021/6/8
+ *  @Env    Viicare-Neo
+ *  @Description  mvpBaseView
+ */
+fun mvpBaseView(
+    packageName: String
+) = """
+package $packageName
+
+interface BaseView<P> {
+     fun setPresenter(p:P)
+}
+    
+"""
+```
+
+#### 为mvpBasePresenter.kt注入灵魂
+> 这个是我项目中mvp架构的presenter底层类
+```kotlin
+package other.mvp.activity.src.app_package
+/**
+ *  @Author Neo
+ *  @Date   2021/6/8
+ *  @Env    Viicare-Neo
+ *  @Description  mvpBasePresenter
+ */
+fun mvpBasePresenter(
+    packageName:String
+)="""
+package $packageName
+
+interface BasePresenter {
+
+    fun subscribe()
+
+    fun unSubscribe()
+}
+"""
+```
+#### 为mvpContract.kt注入灵魂
+> 这个是我项目mvp架构中针对不同activity进行注册v,p两层处理方法的接口
+```kotlin
+package other.mvp.activity.src.app_package.contract
+
+
+/**
+ *  @Author Neo
+ *  @Date   2021/6/8
+ *  @Env    Viicare-Neo
+ *  @Description  mvpContract
+ */
+
+fun mvpContract(
+    packageName:String,
+    activityName:String
+)="""
+package $packageName.contract
+
+import ${packageName}.BaseView
+import ${packageName}.BasePresenter
+
+interface ${activityName}Contract {
+    interface View: BaseView<Presenter> {
+        
+    }
+    
+    interface Presenter: BasePresenter {
+        
+    }
+}
+    
+"""
+```
+
+#### 为mvpPresenter.kt注入灵魂
+> 这个是我项目mvp架构中针对不同activity进行P端代码的具体实现类
+```kotlin
+package other.mvp.activity.src.app_package.p
+
+
+/**
+ *  @Author Neo
+ *  @Date   2021/6/8
+ *  @Env    Viicare-Neo
+ *  @Description  mvpPresenter
+ */
+
+fun mvpPresenter (
+    applicationPackage: String?,
+    packageName:String,
+    activityClass: String
+)="""
+package $packageName.p
+
+import ${applicationPackage}.contract.${activityClass}Contract
+class ${activityClass}Presenter(private val mView: ${activityClass}Contract.View): ${activityClass}Contract.Presenter {
+    init {
+        // TODO something
+        mView.setPresenter(this)
+    }
+    
+    override fun subscribe() {
+    
+    }
+    
+    override fun unSubscribe() {
+    
+    }
+} 
+
+"""
+```
+
+
+#### 为mvpActivity.kt注入灵魂
+> 这个是我项目中页面activity
+```kotlin
+package other.mvp.activity.src.app_package.v
+
+
+/**
+ *  @Author Neo
+ *  @Date   2021/6/7
+ *  @Env    Viicare-Neo
+ *  @Description  mvpActivityKt
+ */
+fun mvpActivityKt (
+    applicationPackage: String?,
+    activityClass: String,
+    layoutName: String,
+    packageName: String
+)="""
+package $packageName.v
+
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import ${applicationPackage}.p.${activityClass}Presenter
+import ${applicationPackage}.contract.${activityClass}Contract
+
+class ${activityClass}Activity : AppCompatActivity (),${activityClass}Contract.View {
+
+    private lateinit var mPresenter: ${activityClass}Contract.Presenter
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.${layoutName})
+        
+        // TODO something
+        ${activityClass}Presenter(this)
+    }
+
+    override fun setPresenter (p: ${activityClass}Contract.Presenter) {
+        this.mPresenter = p
+        this.mPresenter.subscribe()
+    }
+}
+"""
+
+```
+#### 接下来就是为布局文件layout注入灵魂
+> 决定此布局文件的类是res/layout/mvpActivityXml.kt
+```kotlin
+package other.mvp.activity.res.layout
+
+
+/**
+ *  @Author Neo
+ *  @Date   2021/6/7
+ *  @Env    Viicare-Neo
+ *  @Description  mvpActivityXml
+ */
+fun mvpActivityXml(packageName: String,
+                   activityClass: String
+)="""
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="19dp"
+    tools:context="${packageName}.v.${activityClass}Activity"
+    >
+    
+</androidx.constraintlayout.widget.ConstraintLayout>   
+"""
+```
+莫着急，还有最后一步
+#### 修改 src/main/resources/META-INF/plugin.xml
+* 首先必须添加依赖
+```
+  <depends>org.jetbrains.android</depends>
+  <depends>org.jetbrains.kotlin</depends>
+  <depends>com.intellij.modules.java</depends>
+```
+* 如果你在之前步骤中修改了报名，这还需要根据自己的需求进行<id><name><vendor>等值的修改
+* 接下来还需要替换我们创建的 **applicationService**、 **projectService**
+* 修改<applicationListener>/<listener class="">的值为我们之前创建的监听项目生命周期的listener文件的路径
+* 最后添加<wizardTemplateProvider />的值为我们创建的MVPTemplateProviderImpl
+直接上代码
 ```xml
 <idea-plugin>
-    <id>org.jetbrains.plugins.template</id>
-    <name>Template</name>
-    <vendor>JetBrains</vendor>
+    <id>com.neo.mvp.template</id>
+    <name>MVP Template</name>
+    <description>使用该模板创建基于MVP的Activity,layout,presenter,contract等文件</description>
+    <vendor>Neo</vendor>
+
+    <!-- Product and plugin compatibility requirements -->
+    <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
+    <depends>org.jetbrains.android</depends>
+    <depends>org.jetbrains.kotlin</depends>
+    <depends>com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="..."/>
-        <projectService serviceImplementation="..."/>
+        <applicationService serviceImplementation="com.neo.mvp.template.services.MyApplicationService"/>
+        <projectService serviceImplementation="com.neo.mvp.template.services.MyProjectService"/>
     </extensions>
 
-    <projectListeners>
-        <listener class="..." topic="..."/>
-    </projectListeners>
+    <applicationListeners>
+        <listener class="com.neo.mvp.template.listeners.MyProjectManagerListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    </applicationListeners>
+
+    <extensions defaultExtensionNs="com.android.tools.idea.wizard.template">
+        <wizardTemplateProvider implementation="other.mvp.MVPTemplateProviderImpl"/>
+    </extensions>
 </idea-plugin>
-```
-
-You can read more about this file in the [Plugin Configuration File][docs:plugin.xml] section of our documentation.
-
-
-## Sample code
-
-The prepared template provides as little code as possible because it is impossible for a general scaffold to fulfill all the specific requirements for all types of plugins (language support, build tools, VCS related tools). The template contains only the following files:
 
 ```
-.
-├── MyBundle.kt                         Bundle class providing access to the resources messages
-├── listeners
-│   └── MyProjectManagerListener.kt     Project Manager listener - handles project lifecycle
-└── services
-    ├── MyApplicationService.kt         Application-level service available for all projects
-    └── MyProjectService.kt             Project level service
-```
 
-These files are located in `src/main/kotlin`. This location indicates the language being used. So if you decide to use Java instead, sources should be located in the `src/main/java` directory.
+Well,Well!
+插件至此就算是开发完成了，接下来运行 Run Plugin，执行成功会在/build/libs/ 目录下生成我们想要的jar ，
+将此jar安装到AndroidStudio Plugin中即可，
+New->Other->xxx 效果如下图
+![image](./images/createmvp.gif)
 
-To start with the actual implementation, you may check our [IntelliJ Platform SDK DevGuide][docs], which contains an introduction to the essential areas of the plugin development together with dedicated tutorials.
+### 遗留问题
+* 目前创建Activity之后还没有完成对其在Manifest.xml中的注册，需要开发者手动自行注册，这个问题下个版本中完成
 
-For those, who value example codes the most, there are also available [IntelliJ SDK Code Samples][gh:code-samples] and [IntelliJ Platform Explorer][jb:ipe] – a search tool for browsing Extension Points inside existing implementations of open-source IntelliJ Platform plugins.
-
-
-## Predefined Run/Debug configurations
-
-Within the default project structure, there is a `.run` directory provided containing three predefined *Run/Debug configurations* that expose corresponding Gradle tasks:
-
-![Run/Debug configurations][file:run-debug-configurations.png]
-
-| Configuration name | Description                                                                                                                                                            |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Run Plugin         | Runs [`:runIde`][gh:gradle-intellij-plugin-running-dsl] Gradle IntelliJ Plugin task. Use the *Debug* icon for plugin debugging.                                        |
-| Run Tests          | Runs [`:check`][gradle-lifecycle-tasks] Gradle task that invokes `:test` and `detekt`/`ktlint` code inspections.                                                       |
-| Run Verifications  | Runs [`:runPluginVerifier`][gh:gradle-intellij-plugin-verifier-dsl] Gradle IntelliJ Plugin task to check the plugin compatibility against the specified IntelliJ IDEs. |
-
-
-> **TIP:** You can find the logs from the running task in the `idea.log` tab.
-> 
-> ![Run/Debug configuration logs][file:run-logs.png]
-
-
-## Continuous integration
-
-Continuous integration depends on [GitHub Actions][gh:actions], a set of workflows that make it possible to automate your testing and release process. Thanks to such automation, you can delegate the testing and verification phases to the CI and instead focus on development (and writing more tests).
-
-In the `.github/workflows` directory, you can find definitions for the following GitHub Actions workflows:
-
-- [Build](.github/workflows/build.yml)
-    - Triggered on `push` and `pull_request` events.
-    - Runs the *Gradle Wrapper Validation Action* to verify the wrapper's checksum.
-    - Runs the `verifyPlugin` and `test` Gradle tasks.
-    - Builds the plugin with the `buildPlugin` Gradle task and provides the artifact for the next jobs in the workflow.
-    - Verifies the plugin using the *IntelliJ Plugin Verifier* tool.
-    - Prepares a draft release of the GitHub Releases page for manual verification.
-- [Release](.github/workflows/release.yml)
-    - Triggered on `released` event.
-    - Publishes the plugin to the Marketplace using the provided `PUBLISH_TOKEN`.
-    - Sets publish channel depending on the plugin version, i.e. `1.0.0-beta` -> `beta` channel.
-    - Patches the Changelog and commits.
-- [Template Cleanup](.github/workflows/template-cleanup.yml) 
-    - Triggered once on the `push` event when a new template-based repository has been created.
-    - Overrides the scaffold with files from the `.github/template-cleanup` directory.
-    - Overrides JetBrains-specific sentences or package names with ones specific to the target repository.
-    - Removes redundant files.
-
-All the workflow files have accurate documentation, so it's a good idea to take a look through their sources.
-
-### Dependencies management
-
-This Template project depends on Gradle plugins and external libraries – and during the development, you will add more of them.
-
-Keeping the project in good shape and having all the dependencies up-to-date requires time and effort, but it is possible to automate that process using [dependabot][gh:dependabot].
-
-Dependabot is a bot provided by GitHub for checking the build configuration files and reviewing any outdated or insecure dependencies of yours – in case if any update is available, it creates a new pull request providing [the proper change][gh:dependabot-pr].
-
-> **Note:** Dependabot doesn't yet support checking of the Gradle Wrapper. Check the [Gradle Releases][gradle-releases] page and update it with:
-> ```bash
-> ./gradlew wrapper --gradle-version 6.8
-> ```
-
-### Changelog maintenance
-
-When releasing an update, it is important to let your users know what the new version offers. The best way to do this is to provide release notes.
-
-The changelog is a curated list that contains information about any new features, fixes, and deprecations. When they are provided, these lists are available in a few different places: the [CHANGELOG.md](./CHANGELOG.md) file, the [Releases page][gh:releases], the *What's new* section of the Marketplace Plugin page, and inside of the Plugin Manager's item details.
-
-There are many methods for handling the project's changelog. The one used in the current template project is the [Keep a Changelog][keep-a-changelog] approach.
-
-### Release flow
-
-The release process depends on the workflows already described above. When your main branch receives a new pull request or a regular push, the [Build](.github/workflows/build.yml) workflow runs multiple tests on your plugin and prepares a draft release.
-
-![Release draft][file:draft-release.png]
-
-The draft release is a working copy of a release, which you can review before publishing. It includes a predefined title and git tag, which is the current version of the plugin, for example, `v0.0.1`. The changelog is provided automatically using the [gradle-changelog-plugin][gh:gradle-changelog-plugin]. An artifact file is also built with the plugin attached. Every new Build overrides the previous draft to keep your *Releases* page clean.
-
-When you edit the draft and use the <kbd>Publish release</kbd> button, GitHub will tag your repository with the given version and add a new entry to the Releases tab. Next, it will notify users that are *watching* the repository, and it will trigger the final [Release](.github/workflows/release.yml) workflow.
-
-### Publishing the plugin
-
-Releasing a plugin to the Marketplace is a straightforward operation that uses the `publishPlugin` Gradle task provided by the [gradle-intellij-plugin][gh:gradle-intellij-plugin]. The [Release](.github/workflows/release.yml) workflow automates this process by running the task when a new release appears in the GitHub Releases section.
-
-> **TIP**: Set a suffix to the plugin version to publish it in the custom repository channel, i.e. `v1.0.0-beta` will push your plugin to the `beta` [release channel][docs:release-channel].
-
-The authorization process relies on the `PUBLISH_TOKEN` secret environment variable, which has to be acquired through the Secrets section of the repository Settings.
-
-![Settings > Secrets][file:settings-secrets.png]
-
-You can get that token in the [My Tokens][jb:my-tokens] tab within your Marketplace profile dashboard.
-
-> **Important:**
-> Before using the automated deployment process, it is necessary to manually create a new plugin in the Marketplace to specify options like the license, repository URL, etc.
-> Please follow the [Publishing a Plugin][docs:publishing] instructions.
-
-
-## FAQ
-
-### How to use Java in my project?
-
-Java language is supported by default along with Kotlin.
-Initially, there's `/src/main/kotlin` directory available with some minimal examples.
-You can still replace it or add next to it the `/src/main/java` to start working with Java language instead.
-
-### How to disable tests or build job using the `[skip ci]` commit message?
-
-Since the February 2021, GitHub Actions [support the skip CI feature][github-actions-skip-ci].
-If the message contains one of the following strings: `[skip ci]`, `[ci skip]`, `[no ci]`, `[skip actions]`, or `[actions skip]` – workflows will not be triggered.
-
-
-## Useful links
-
-- [IntelliJ Platform SDK DevGuide][docs]
-- [IntelliJ Platform Explorer][jb:ipe]
-- [Marketplace Quality Guidelines][jb:quality-guidelines]
-- [IntelliJ Platform UI Guidelines][jb:ui-guidelines]
-- [Marketplace Paid Plugins][jb:paid-plugins]
-- [Kotlin UI DSL][docs:kotlin-ui-dsl]
-- [IntelliJ SDK Code Samples][gh:code-samples]
-- [JetBrains Platform Slack][jb:slack]
-- [JetBrains Platform Twitter][jb:twitter]
-- [IntelliJ IDEA Open API and Plugin Development Forum][jb:forum]
-- [Keep a Changelog][keep-a-changelog]
-- [GitHub Actions][gh:actions]
-
-[docs]: https://plugins.jetbrains.com/docs/intellij?from=IJPluginTemplate
-[docs:intro]: https://plugins.jetbrains.com/docs/intellij/intellij-platform.html?from=IJPluginTemplate
-[docs:kotlin-ui-dsl]: https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl.html?from=IJPluginTemplate
-[docs:plugin.xml]: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html?from=IJPluginTemplate
-[docs:publishing]: https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html?from=IJPluginTemplate
-[docs:release-channel]: https://plugins.jetbrains.com/docs/intellij/deployment.html?from=IJPluginTemplate#specifying-a-release-channel
-[docs:using-gradle]: https://plugins.jetbrains.com/docs/intellij/gradle-build-system.html?from=IJPluginTemplate
-
-[file:use-this-template.png]: .github/readme/use-this-template.png
-[file:draft-release.png]: .github/readme/draft-release.png
-[file:gradle.properties]: ./gradle.properties
-[file:run-logs.png]: .github/readme/run-logs.png
-[file:plugin.xml]: ./src/main/resources/META-INF/plugin.xml
-[file:run-debug-configurations.png]: .github/readme/run-debug-configurations.png
-[file:settings-secrets.png]: .github/readme/settings-secrets.png
-[file:template_cleanup.yml]: ./.github/workflows/template-cleanup.yml
-
-[gh:actions]: https://help.github.com/en/actions
-[gh:dependabot]: https://docs.github.com/en/free-pro-team@latest/github/administering-a-repository/keeping-your-dependencies-updated-automatically
-[gh:code-samples]: https://github.com/JetBrains/intellij-sdk-code-samples
-[gh:gradle-changelog-plugin]: https://github.com/JetBrains/gradle-changelog-plugin
-[gh:gradle-intellij-plugin]: https://github.com/JetBrains/gradle-intellij-plugin
-[gh:gradle-intellij-plugin-running-dsl]: https://github.com/JetBrains/gradle-intellij-plugin#running-dsl
-[gh:gradle-intellij-plugin-verifier-dsl]: https://github.com/JetBrains/gradle-intellij-plugin#plugin-verifier-dsl
-[gh:releases]: https://github.com/JetBrains/intellij-platform-plugin-template/releases
-[gh:build]: https://github.com/JetBrains/intellij-platform-plugin-template/actions?query=workflow%3ABuild
-[gh:dependabot-pr]: https://github.com/JetBrains/intellij-platform-plugin-template/pull/73
-
-[jb:confluence-on-gh]: https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub
-[jb:download-ij]: https://www.jetbrains.com/idea/download
-[jb:forum]: https://intellij-support.jetbrains.com/hc/en-us/community/topics/200366979-IntelliJ-IDEA-Open-API-and-Plugin-Development
-[jb:ipe]: https://plugins.jetbrains.com/intellij-platform-explorer
-[jb:my-tokens]: https://plugins.jetbrains.com/author/me/tokens
-[jb:paid-plugins]: https://plugins.jetbrains.com/docs/marketplace/paid-plugins-marketplace.html
-[jb:quality-guidelines]: https://plugins.jetbrains.com/docs/marketplace/quality-guidelines.html
-[jb:slack]: https://plugins.jetbrains.com/slack
-[jb:twitter]: https://twitter.com/JBPlatform
-[jb:ui-guidelines]: https://jetbrains.github.io/ui
-
-[keep-a-changelog]: https://keepachangelog.com
-[detekt]: https://detekt.github.io/detekt
-[github-actions-skip-ci]: https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/
-[gradle]: https://gradle.org
-[gradle-releases]: https://gradle.org/releases
-[gradle-kotlin-dsl]: https://docs.gradle.org/current/userguide/kotlin_dsl.html
-[gradle-lifecycle-tasks]: https://docs.gradle.org/current/userguide/java_plugin.html#lifecycle_tasks
-[kotlin-for-plugin-developers]: https://plugins.jetbrains.com/docs/intellij/kotlin.html#adding-kotlin-support

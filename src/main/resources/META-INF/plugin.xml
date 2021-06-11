@@ -22,6 +22,6 @@
     </applicationListeners>
 
     <extensions defaultExtensionNs="com.android.tools.idea.wizard.template">
-        <wizardTemplateProvider implementation="other.mvp.SamplePluginTemplateProviderImpl"/>
+        <wizardTemplateProvider implementation="other.mvp.MVPTemplateProviderImpl"/>
     </extensions>
 </idea-plugin>

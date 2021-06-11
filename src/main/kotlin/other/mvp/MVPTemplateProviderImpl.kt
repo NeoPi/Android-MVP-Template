@@ -11,7 +11,7 @@ import other.mvp.activity.mvpActivityTemplate
  *  @Env    Viicare-Neo
  *  @Description  SamplePluginTemplateProviderImpl
  */
-class SamplePluginTemplateProviderImpl: WizardTemplateProvider() {
+class MVPTemplateProviderImpl: WizardTemplateProvider() {
 
 
     override fun getTemplates(): List<Template> {
